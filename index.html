@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WEB QUEST PRO</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080b18;color:white;font-family:Arial,sans-serif}
+header{text-align:center;padding:22px;background:#111a32;border-bottom:1px solid #26365c}
+header h1{color:#35eaff;letter-spacing:4px;margin:5px}
+nav{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;padding:15px}
+button{border:0;border-radius:11px;padding:12px 16px;background:linear-gradient(120deg,#00cfff,#704bff);color:white;font-weight:bold;cursor:pointer;transition:.2s}
+button:hover{transform:scale(1.05);filter:brightness(1.2)}
+.page{display:none;padding:18px;max-width:950px;margin:auto}
+.page.active{display:block}
+.stats{display:flex;justify-content:space-around;gap:10px;background:#151e38;padding:15px;border-radius:15px;margin:10px}
+.panel{background:#141d36;padding:20px;border-radius:16px;border:1px solid #30416c;margin:15px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:15px;margin-top:25px}
+.card{height:180px;background:linear-gradient(145deg,#172b54,#301d65);border:2px solid #394d91;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;animation:float 3s infinite ease-in-out;transition:.3s}
+.card:nth-child(even){animation-delay:.5s}
+.card:hover{border-color:#00eaff;box-shadow:0 0 20px #00dfff}
+.card.selected{border:3px solid #00f5a0;box-shadow:0 0 25px #00f5a0}
+.emoji{font-size:43px}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+input{width:100%;padding:14px;border-radius:10px;border:1px solid #53658e;background:#080f22;color:white;margin:10px 0;font-size:16px}
+.site{font-size:24px;color:#42eaff;font-weight:bold}
+.small{color:#aab6d3;font-size:13px}
+.result{background:#1a2948;border:1px solid #334b7b;border-radius:13px;padding:15px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.result b{color:#41eaff}
+.shop-item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#1b2948;padding:15px;margin:10px 0;border-radius:12px}
+#message{color:#00f5a0;margin-top:15px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+<h1>⚡ WEB QUEST PRO</h1>
+<p>Keşfet • Görev Yap • Puan Kazan</p>
+</header>
+
+<div class="stats">
+<div>⭐ Puan: <b id="points">0</b></div>
+<div>🏆 Seviye: <b id="level">1</b></div>
+<div>🎯 Görev: <b id="done">0</b></div>
+</div>
+
+<nav>
+<button onclick="showPage('home')">🏠 Ana Menü</button>
+<button onclick="showPage('search')">🌐 Site Ara</button>
+<button onclick="showPage('shop')">🛒 Puan Marketi</button>
+</nav>
+
+<section id="home" class="page active">
+<h2>🎴 Görev Kartını Seç!</h2>
+<p>5 karttan birini seç, görevin ortaya çıksın.</p>
+<div class="cards" id="cards"></div>
+<div style="text-align:center;margin-top:25px">
+<button onclick="confirmCard()">SEÇİMİ ONAYLA 🚀</button>
+</div>
+<div id="message"></div>
+</section>
+
+<section id="mission" class="page">
+<div class="panel">
+<h2>🎯 Görevin Hazır!</h2>
+<div class="site" id="missionSite"></div>
+<p id="missionDescription"></p>
+<p class="small">Görev puanı: 50 ⭐</p>
+<button onclick="openMissionSite()">🌐 Siteye Git</button>
+<button onclick="completeMission()">✅ Görevi Tamamladım</button>
+<p class="small">Not: Tamamlama puanı bu demo sürümde kullanıcı onayıyla verilir; dış sitedeki etkinlik otomatik doğrulanmaz.</p>
+</div>
+<button onclick="showPage('home')">← Ana Menü</button>
+</section>
+
+<section id="search" class="page">
+<h2>🌍 Site Arama Merkezi</h2>
+<div class="panel">
+<p>İstediğin internet sitesini ara.</p>
+<input id="searchInput" placeholder="Örnek: Roblox, YouTube, Google..." oninput="searchSites()">
+<div id="results"></div>
+</div>
+</section>
+
+<section id="shop" class="page">
+<h2>🛒 Puan Marketi</h2>
+<p>Puanlarını kullanarak ödüller aç!</p>
+<div id="shopItems"></div>
+</section>
+
+<script>
+const sites=[
+{name:"YouTube",url:"https://www.youtube.com",icon:"▶️",pop:100,desc:"Video ve oyun içerikleri"},
+{name:"Google",url:"https://www.google.com",icon:"🔍",pop:99,desc:"İnternet arama motoru"},
+{name:"Roblox",url:"https://www.roblox.com",icon:"🎮",pop:98,desc:"Oyun keşfet ve oluştur"},
+{name:"Wikipedia",url:"https://www.wikipedia.org",icon:"📚",pop:95,desc:"Çevrimiçi ansiklopedi"},
+{name:"Minecraft",url:"https://www.minecraft.net",icon:"⛏️",pop:93,desc:"Minecraft resmi sitesi"},
+{name:"Twitch",url:"https://www.twitch.tv",icon:"🎥",pop:90,desc:"Canlı yayın platformu"},
+{name:"Steam",url:"https://store.steampowered.com",icon:"🕹️",pop:89,desc:"PC oyun mağazası"},
+{name:"Discord",url:"https://discord.com",icon:"💬",pop:88,desc:"Topluluk ve sohbet"},
+{name:"Epic Games",url:"https://store.epicgames.com",icon:"🎯",pop:87,desc:"Oyun mağazası"},
+{name:"Reddit",url:"https://www.reddit.com",icon:"🟠",pop:85,desc:"Topluluk platformu"},
+{name:"CrazyGames",url:"https://www.crazygames.com",icon:"🎲",pop:82,desc:"Tarayıcı oyunları"},
+{name:"Poki",url:"https://poki.com",icon:"🎮",pop:80,desc:"Çevrimiçi oyunlar"},
+{name:"GitHub",url:"https://github.com",icon:"💻",pop:78,desc:"Yazılım projeleri"},
+{name:"Netflix",url:"https://www.netflix.com",icon:"🎬",pop:77,desc:"Film ve dizi platformu"}
+];
+
+const cards=[
+{icon:"🎮",name:"Oyun Görevi"},
+{icon:"🌍",name:"Keşif Görevi"},
+{icon:"🧠",name:"Bilgi Görevi"},
+{icon:"⚡",name:"Hız Görevi"},
+{icon:"🏆",name:"Özel Görev"}
+];
+
+const missions=[
+"Siteyi ziyaret et ve oyun bölümünü keşfet.",
+"Site içerisinde ilgini çeken bir oyun bul.",
+"Siteyi incele ve en sevdiğin özelliği keşfet.",
+"Site içerisinde yeni bir bölüm keşfet.",
+"Site hakkında kısa bir bilgi öğren."
+];
+
+let points=Number(localStorage.getItem("wq_points"))||0;
+let done=Number(localStorage.getItem("wq_done"))||0;
+let selected=-1;
+let currentSite=null;
+let currentMission=null;
+let completed=false;
+let owned=JSON.parse(localStorage.getItem("wq_owned")||"[]");
+
+function update(){
+ document.getElementById("points").textContent=points;
+ document.getElementById("level").textContent=Math.floor(done/3)+1;
+ document.getElementById("done").textContent=done;
+ localStorage.setItem("wq_points",points);
+ localStorage.setItem("wq_done",done);
+}
+
+function showPage(id){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ if(id==="shop")renderShop();
+}
+
+function renderCards(){
+ document.getElementById("cards").innerHTML=cards.map((c,i)=>`
+ <div class="card" id="card${i}" onclick="selectCard(${i})">
+ <div class="emoji">${c.icon}</div>
+ <h3>${c.name}</h3>
+ <small>Gizli Görev</small>
+ </div>`).join("");
+}
+
+function selectCard(i){
+ selected=i;
+ document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected"));
+ document.getElementById("card"+i).classList.add("selected");
+ document.getElementById("message").textContent="Seçtin: "+cards[i].name;
+}
+
+function confirmCard(){
+ if(selected===-1){alert("Önce bir kart seç!");return}
+ currentSite=sites[Math.floor(Math.random()*sites.length)];
+ currentMission=missions[Math.floor(Math.random()*missions.length)];
+ completed=false;
+ document.getElementById("missionSite").textContent=currentSite.icon+" "+currentSite.name;
+ document.getElementById("missionDescription").textContent=currentMission;
+ showPage("mission");
+}
+
+function openMissionSite(){
+ if(currentSite)window.open(currentSite.url,"_blank","noopener");
+}
+
+function completeMission(){
+ if(!currentSite)return;
+ if(completed){alert("Bu görev için puanı zaten aldın!");return}
+ completed=true;
+ points+=50;
+ done++;
+ update();
+ alert("🎉 Tebrikler! 50 puan kazandın!");
+ showPage("home");
+ selected=-1;
+ document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected"));
+}
+
+function searchSites(){
+ const q=document.getElementById("searchInput").value.toLowerCase().trim();
+ const results=document.getElementById("results");
+ if(!q){results.innerHTML="<p class='small'>Aramaya başla...</p>";return}
+ const found=sites.filter(s=>(s.name+" "+s.desc).toLowerCase().includes(q)).sort((a,b)=>b.pop-a.pop);
+ results.innerHTML=found.length?found.map(s=>`
+ <div class="result">
+ <div><b>${s.icon} ${s.name}</b><div class="small">${s.desc} • Popülerlik: ${s.pop}/100</div></div>
+ <button onclick="goSite('${s.name.replace(/'/g,"")}')">Siteye Git ↗</button>
+ </div>`).join(""):"<p>Bu listede sonuç bulunamadı. Farklı bir isim dene.</p>";
+}
+
+function goSite(name){
+ const s=sites.find(x=>x.name===name);
+ if(s)window.open(s.url,"_blank","noopener");
+}
+
+const rewards=[
+{name:"✨ Neon Profil",price:100,desc:"Özel profil ödülü"},
+{name:"💎 Elmas Rozeti",price:200,desc:"Elmas koleksiyon rozeti"},
+{name:"👑 Altın Taç",price:350,desc:"Özel taç ödülü"},
+{name:"🚀 Efsane Ünvan",price:500,desc:"Efsane oyuncu ünvanı"}
+];
+
+function renderShop(){
+ document.getElementById("shopItems").innerHTML=rewards.map((r,i)=>`
+ <div class="shop-item">
+ <div><b>${r.name}</b><div class="small">${r.desc}</div><b>${r.price} ⭐</b></div>
+ <button onclick="buy(${i})">${owned.includes(i)?"Alındı":"Satın Al"}</button>
+ </div>`).join("");
+}
+
+function buy(i){
+ const r=rewards[i];
+ if(owned.includes(i)){alert("Bu ödül sende zaten var!");return}
+ if(points<r.price){alert("Yeterli puanın yok!");return}
+ points-=r.price;
+ owned.push(i);
+ localStorage.setItem("wq_owned",JSON.stringify(owned));
+ update();
+ renderShop();
+ alert("Ödül başarıyla alındı!");
+}
+
+renderCards();
+update();
+searchSites();
+</script>
+</body>
+</html>
